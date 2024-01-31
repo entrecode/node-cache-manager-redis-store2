@@ -1,14 +1,16 @@
 const { callbackify } = require('node:util');
 const { createClient } = require('redis');
 
-module.exports = async function redisStore(config) {
+module.exports = function redisStore(config) {
   let { redisClient: redisCache, ...args } = config;
   if (!redisCache) {
     redisCache = createClient(args);
   }
 
   if (!redisCache.isReady) {
-    await redisCache.connect();
+    redisCache.connect().catch((err) => {
+      logger.error('Redis connection error: ' + err);
+    });
   }
   return buildRedisStoreWithConfig(redisCache, config);
 };

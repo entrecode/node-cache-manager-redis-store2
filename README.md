@@ -2,19 +2,18 @@
 [![GitHub issues](https://img.shields.io/github/issues/dabroek/node-cache-manager-redis-store.svg)](https://github.com/dabroek/node-cache-manager-redis-store/issues)
 [![codecov](https://codecov.io/github/dabroek/node-cache-manager-redis-store/branch/master/graph/badge.svg?token=QmCNGyCLlD)](https://codecov.io/github/dabroek/node-cache-manager-redis-store)
 
-Redis store for node cache manager
-==================================
+# Redis store for node cache manager
 
 Redis cache store for [node-cache-manager](https://github.com/BryanDonovan/node-cache-manager).
 
-How is this package different from `node-cache-manager-redis`?
-----------------------------------------------------------------------------------
+## How is this package different from `node-cache-manager-redis`?
+
 This is a **completely different version** than the earlier [node-cache-manager-redis](https://github.com/dial-once/node-cache-manager-redis). This package does not use `redis-pool` which is unnecessary and not actively maintained.
 
 This package aims to provide **the most simple wrapper possible** by just passing the configuration to the underlying `node_redis` package.
 
-How is this package different from `dabroek/node-cache-manager-redis-store`?
-----------------------------------------------------------------------------------
+## How is this package different from `dabroek/node-cache-manager-redis-store`?
+
 It supports using an own redis instance:
 
 ```js
@@ -29,24 +28,23 @@ redisClient.on('error', (error) => {
 });
 
 const redisCache = cacheManager.caching({
-  store: redisStore,
-  redisClient,
+  store: redisStore({redisClient}),
 });
 ```
 
-Installation
-------------
+## Installation
 
 ```sh
 npm install cache-manager-redis-store --save
 ```
+
 or
+
 ```sh
 yarn add cache-manager-redis-store
 ```
 
-Usage Examples
---------------
+## Usage Examples
 
 See examples below on how to implement the Redis cache store.
 
@@ -63,11 +61,11 @@ var config = {
   },
   password: 'XXXXX',
   db: 0,
-  ttl: 600
+  ttl: 600,
 };
 
 var redisCache = cacheManager.caching({
-  store: await redisStore(config),
+  store: redisStore(config),
 });
 
 // listen for redis connection error event
@@ -100,7 +98,7 @@ console.log(await redisCache.del('foo'));
 
 function getUser(id, cb) {
   setTimeout(() => {
-    console.log("Returning user from slow database.");
+    console.log('Returning user from slow database.');
     cb(null, { id: id, name: 'Bob' });
   }, 100);
 }
@@ -109,19 +107,24 @@ var userId = 123;
 var key = `user_${userId}`;
 
 // Note: ttl is optional in wrap()
-redisCache.wrap(key, (cb) => {
-  getUser(userId, cb);
-}, { ttl: ttl }, (err, user) => {
-  console.log(user);
+redisCache.wrap(
+  key,
+  (cb) => {
+    getUser(userId, cb);
+  },
+  { ttl: ttl },
+  (err, user) => {
+    console.log(user);
 
-  // Second time fetches user from redisCache
-  redisCache
-    .wrap(key, () => getUser(userId))
-    .then(console.log)
-    .catch(err => {
-      // handle error
-    });
-});
+    // Second time fetches user from redisCache
+    redisCache
+      .wrap(key, () => getUser(userId))
+      .then(console.log)
+      .catch((err) => {
+        // handle error
+      });
+  },
+);
 ```
 
 ### Multi-store
@@ -149,29 +152,34 @@ console.log(result);
 await multiCache.del('foo2');
 
 // Note: ttl is optional in wrap
-multiCache.wrap(key2, (cb) => {
-  getUser(userId2, cb);
-}, (err, user) => {
-  console.log(user);
-
-  // Second time fetches user from memoryCache, since it's highest priority.
-  // If the data expires in the memory cache, the next fetch would pull it from
-  // the 'someOtherCache', and set the data in memory again.
-  multiCache.wrap(key2, (cb) => {
+multiCache.wrap(
+  key2,
+  (cb) => {
     getUser(userId2, cb);
-  }, (err, user) => {
+  },
+  (err, user) => {
     console.log(user);
-  });
-});
+
+    // Second time fetches user from memoryCache, since it's highest priority.
+    // If the data expires in the memory cache, the next fetch would pull it from
+    // the 'someOtherCache', and set the data in memory again.
+    multiCache.wrap(
+      key2,
+      (cb) => {
+        getUser(userId2, cb);
+      },
+      (err, user) => {
+        console.log(user);
+      },
+    );
+  },
+);
 ```
 
-Contribution
-------------
+## Contribution
 
 Want to help improve this package? We take [pull requests](https://github.com/dabroek/node-cache-manager-redis-store/pulls).
 
-
-License
--------
+## License
 
 The `node-cache-manager-redis-store` is licensed under the MIT license.
