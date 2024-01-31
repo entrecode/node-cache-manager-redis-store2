@@ -13,6 +13,27 @@ This is a **completely different version** than the earlier [node-cache-manager-
 
 This package aims to provide **the most simple wrapper possible** by just passing the configuration to the underlying `node_redis` package.
 
+How is this package different from `dabroek/node-cache-manager-redis-store`?
+----------------------------------------------------------------------------------
+It supports using an own redis instance:
+
+```js
+const cacheManager = require('cache-manager');
+const config = require('config');
+const redis = require('redis');
+const redisStore = require('cache-manager-redis-store');
+
+const redisClient = redis.createClient(config.get('redis'));
+redisClient.on('error', (error) => {
+  console.error(`Error connecting to redis: ${error.stack}`);
+});
+
+const redisCache = cacheManager.caching({
+  store: redisStore,
+  redisClient,
+});
+```
+
 Installation
 ------------
 

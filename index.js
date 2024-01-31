@@ -2,9 +2,14 @@ const { callbackify } = require('node:util');
 const { createClient } = require('redis');
 
 module.exports = async function redisStore(config) {
-  const redisCache = createClient(config);
-  await redisCache.connect();
+  let { redisClient: redisCache, ...args } = config;
+  if (!redisCache) {
+    redisCache = createClient(args);
+  }
 
+  if (!redisCache.isReady) {
+    await redisCache.connect();
+  }
   return buildRedisStoreWithConfig(redisCache, config);
 };
 
