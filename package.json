@@ -4,36 +4,22 @@
   "description": "Redis store for node-cache-manager",
   "version": "3.0.1",
   "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dabroek/node-cache-manager-redis-store.git"
+    "url": "https://github.com/entreocde/node-cache-manager-redis-store2.git"
   },
   "scripts": {
-    "prepare": "npm prune",
     "test": "jest --forceExit",
-    "test-cov": "jest --forceExit --coverage",
-    "build": "rollup -c"
+    "test-cov": "jest --forceExit --coverage"
   },
   "dependencies": {
-    "redis": "^4.3.1"
+    "redis": "^4.6.12"
   },
   "devDependencies": {
-    "@babel/cli": "^7.19.3",
-    "@babel/core": "^7.19.3",
-    "@babel/plugin-transform-runtime": "^7.19.1",
-    "@babel/preset-env": "^7.19.4",
-    "@babel/runtime": "^7.19.4",
-    "@rollup/plugin-babel": "^6.0.0",
     "@types/cache-manager": "^4.0.2",
-    "babel-jest": "^29.2.0",
     "cache-manager": "^4.1.0",
-    "jest": "^29.2.0",
-    "rollup": "^2.79.1"
+    "jest": "^29.2.0"
   },
   "engines": {
     "node": ">= 16.18.0"

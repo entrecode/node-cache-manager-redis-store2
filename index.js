@@ -1,22 +1,21 @@
-import {callbackify} from 'node:util';
-import {createClient} from 'redis';
+const { callbackify } = require('node:util');
+const { createClient } = require('redis');
 
-export async function redisStore(config) {
+module.exports = async function redisStore(config) {
   const redisCache = createClient(config);
   await redisCache.connect();
 
   return buildRedisStoreWithConfig(redisCache, config);
-}
+};
 
 const buildRedisStoreWithConfig = (redisCache, config) => {
-  const isCacheableValue =
-    config.isCacheableValue || (value => value !== undefined && value !== null);
+  const isCacheableValue = config.isCacheableValue || ((value) => value !== undefined && value !== null);
   const set = async (key, value, options) => {
     if (!isCacheableValue(value)) {
       throw new Error(`"${value}" is not a cacheable value`);
     }
 
-    const ttl = (options?.ttl || options?.ttl === 0) ? options.ttl : config.ttl;
+    const ttl = options?.ttl || options?.ttl === 0 ? options.ttl : config.ttl;
 
     if (ttl) {
       return redisCache.setEx(key, ttl, encodeValue(value));
@@ -44,7 +43,7 @@ const buildRedisStoreWithConfig = (redisCache, config) => {
     if (isObject(args.at(-1))) {
       options = args.pop();
     }
-    const ttl = (options.ttl || options.ttl === 0) ? options.ttl : config.ttl;
+    const ttl = options.ttl || options.ttl === 0 ? options.ttl : config.ttl;
 
     // Zips even and odd array items into tuples
     const items = args
@@ -74,17 +73,15 @@ const buildRedisStoreWithConfig = (redisCache, config) => {
     if (isObject(args.at(-1))) {
       options = args.pop();
     }
-    return redisCache
-      .mGet(args)
-      .then((res) =>
-        res.map((val) => {
-          if (val === null) {
-            return null;
-          }
+    return redisCache.mGet(args).then((res) =>
+      res.map((val) => {
+        if (val === null) {
+          return null;
+        }
 
-          return options.parse !== false ? decodeValue(val) : val;
-        }),
-      );
+        return options.parse !== false ? decodeValue(val) : val;
+      }),
+    );
   };
   const mdel = async (...args) => {
     let options = {};
@@ -201,7 +198,5 @@ function decodeValue(val) {
 }
 
 function isObject(object) {
-  return typeof object === 'object'
-    && !Array.isArray(object)
-    && object !== null;
+  return typeof object === 'object' && !Array.isArray(object) && object !== null;
 }

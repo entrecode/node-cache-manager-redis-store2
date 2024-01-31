@@ -1,5 +1,5 @@
-import cacheManager from 'cache-manager';
-import {redisStore} from '../index';
+const cacheManager = require('cache-manager');
+const redisStore = require('../index');
 
 let redisCache;
 let customRedisCache;
@@ -7,7 +7,7 @@ let customRedisCache;
 const config = {
   socket: {
     host: '127.0.0.1',
-    port: 6379
+    port: 6379,
   },
   password: undefined,
   db: 0,
@@ -23,13 +23,15 @@ beforeEach(async () => {
   const customConfig = {
     ...config,
     isCacheableValue: (val) => {
-      if (val === undefined) { // allow undefined
+      if (val === undefined) {
+        // allow undefined
         return true;
-      } else if (val === 'FooBarString') { // disallow FooBarString
+      } else if (val === 'FooBarString') {
+        // disallow FooBarString
         return false;
       }
       return redisCache.store.isCacheableValue(val);
-    }
+    },
   };
 
   customRedisCache = cacheManager.caching({
@@ -42,7 +44,7 @@ describe('initialization', () => {
   it('should create a store with the options that were provided', async () => {
     const redisPwdCache = cacheManager.caching({
       store: await redisStore(config),
-      ...config
+      ...config,
     });
 
     expect(redisPwdCache.store.getClient().options.socket.host).toEqual(config.socket.host);
@@ -58,7 +60,7 @@ describe('set', () => {
   it('can be used with a callback', (done) => {
     redisCache.set('foo', 'bar', function (err, res) {
       expect(err).toBeNull();
-      expect(res).toEqual("OK");
+      expect(res).toEqual('OK');
       done();
     });
   });
@@ -70,12 +72,12 @@ describe('set', () => {
   });
 
   it('should store a value with a specific ttl', async () => {
-    await redisCache.set('foo', 'bar', {ttl: 5});
+    await redisCache.set('foo', 'bar', { ttl: 5 });
     await expect(redisCache.ttl('foo')).resolves.toEqual(5);
   });
 
   it('should store a value with a infinite ttl', async () => {
-    await redisCache.set('foo', 'bar', {ttl: 0});
+    await redisCache.set('foo', 'bar', { ttl: 0 });
     await expect(redisCache.ttl('foo')).resolves.toEqual(-1);
   });
 
@@ -94,7 +96,9 @@ describe('set', () => {
 
   it('should not store a value disallowed by isCacheableValue', async () => {
     expect(customRedisCache.store.isCacheableValue('FooBarString')).toBe(false);
-    await expect(customRedisCache.set('foobar', 'FooBarString')).rejects.toThrowError('"FooBarString" is not a cacheable value');
+    await expect(customRedisCache.set('foobar', 'FooBarString')).rejects.toThrowError(
+      '"FooBarString" is not a cacheable value',
+    );
   });
 
   it('should return an error if there is an error acquiring a connection', async () => {
@@ -109,7 +113,8 @@ describe('get', () => {
   });
 
   it('can be used with a callback', (done) => {
-    redisCache.set('foo', 'bar')
+    redisCache
+      .set('foo', 'bar')
       .then(() => {
         redisCache.get('foo', function (err, res) {
           expect(err).toBeNull();
@@ -117,7 +122,7 @@ describe('get', () => {
           done();
         });
       })
-      .catch(err => done(err));
+      .catch((err) => done(err));
   });
 
   it('should retrieve a value for a given key', async () => {
@@ -135,7 +140,7 @@ describe('get', () => {
   it('should retrieve a value for a given key unparsed', async () => {
     const value = 'bar';
     await redisCache.set('foo', value);
-    await expect(redisCache.get('foo', {parse:false})).resolves.toEqual('\"bar\"');
+    await expect(redisCache.get('foo', { parse: false })).resolves.toEqual('"bar"');
   });
 
   it('should return null when the key is invalid', async () => {
@@ -154,7 +159,8 @@ describe('del', () => {
   });
 
   it('can be used with a callback', (done) => {
-    redisCache.set('foo', 'bar')
+    redisCache
+      .set('foo', 'bar')
       .then(() => {
         redisCache.del('foo', function (err, res) {
           expect(err).toBeNull();
@@ -162,7 +168,7 @@ describe('del', () => {
           done();
         });
       })
-      .catch(err => done(err));
+      .catch((err) => done(err));
   });
 
   it('should delete a value for a given key', async () => {
@@ -193,29 +199,30 @@ describe('mset', () => {
   it('can be used with a callback', (done) => {
     redisCache.mset('foo', 'bar', 'baz', 'qux', function (err, res) {
       expect(err).toBeNull();
-      expect(res).toEqual(["OK", "OK"]);
-      redisCache.mget('foo', 'baz')
+      expect(res).toEqual(['OK', 'OK']);
+      redisCache
+        .mget('foo', 'baz')
         .then((res) => {
           expect(res).toEqual(['bar', 'qux']);
           done();
         })
-        .catch(err => done(err));
+        .catch((err) => done(err));
     });
   });
 
   it('should store a value without ttl', async () => {
-    await expect(redisCache.mset('foo', 'bar', 'foo2', 'bar2')).resolves.toEqual(["OK", "OK"]);
+    await expect(redisCache.mset('foo', 'bar', 'foo2', 'bar2')).resolves.toEqual(['OK', 'OK']);
     await expect(redisCache.mget('foo', 'foo2')).resolves.toEqual(['bar', 'bar2']);
   });
 
   it('should store a value with a specific ttl', async () => {
-    await redisCache.mset('foo', 'bar', 'foo2', 'bar2', {ttl: 60});
+    await redisCache.mset('foo', 'bar', 'foo2', 'bar2', { ttl: 60 });
     await expect(redisCache.ttl('foo')).resolves.toEqual(60);
     await expect(redisCache.ttl('foo2')).resolves.toEqual(60);
   });
 
   it('should store a value with a infinite ttl', async () => {
-    await redisCache.mset('foo', 'bar', {ttl: 0});
+    await redisCache.mset('foo', 'bar', { ttl: 0 });
     await expect(redisCache.ttl('foo')).resolves.toEqual(-1);
   });
 
@@ -224,7 +231,7 @@ describe('mset', () => {
   });
 
   it('should store a value without callback', async () => {
-    await expect(redisCache.mset('foo', 'baz', 'foo2', 'baz2')).resolves.toEqual(["OK", "OK"]);
+    await expect(redisCache.mset('foo', 'baz', 'foo2', 'baz2')).resolves.toEqual(['OK', 'OK']);
     await expect(redisCache.mget('foo', 'foo2')).resolves.toEqual(['baz', 'baz2']);
   });
 
@@ -240,7 +247,9 @@ describe('mset', () => {
 
   it('should not store a value disallowed by isCacheableValue', async () => {
     expect(customRedisCache.store.isCacheableValue('FooBarString')).toBe(false);
-    await expect(customRedisCache.mset('foobar', 'FooBarString')).rejects.toThrowError('"FooBarString" is not a cacheable value');
+    await expect(customRedisCache.mset('foobar', 'FooBarString')).rejects.toThrowError(
+      '"FooBarString" is not a cacheable value',
+    );
   });
 
   it('should return an error if there is an error acquiring a connection', async () => {
@@ -261,16 +270,17 @@ describe('mget', () => {
   });
 
   it('can be used with a callback', (done) => {
-    redisCache.mset('foo', 'bar', 'baz', 'qux')
+    redisCache
+      .mset('foo', 'bar', 'baz', 'qux')
       .then((res) => {
-        expect(res).toEqual(["OK", "OK"]);
+        expect(res).toEqual(['OK', 'OK']);
         redisCache.mget('foo', 'baz', function (err, res) {
           expect(err).toBeNull();
           expect(res).toEqual(['bar', 'qux']);
           done();
         });
       })
-      .catch(err => done(err));
+      .catch((err) => done(err));
   });
 
   it('should retrieve a value for a given key', async () => {
@@ -283,13 +293,13 @@ describe('mget', () => {
   it('should retrieve a value for a given key if options provided', async () => {
     const value = 'bar';
     await redisCache.mset('foo', value);
-    await expect(redisCache.mget('foo', {someConfig: true})).resolves.toEqual([value]);
+    await expect(redisCache.mget('foo', { someConfig: true })).resolves.toEqual([value]);
   });
 
   it('should retrieve a value for a given key unparsed', async () => {
     const value = 'bar';
     await redisCache.mset('foo', value);
-    await expect(redisCache.mget('foo', {parse: false})).resolves.toEqual(['\"bar\"']);
+    await expect(redisCache.mget('foo', { parse: false })).resolves.toEqual(['"bar"']);
   });
 
   it('should return null when the key is invalid', async () => {
@@ -302,28 +312,29 @@ describe('mget', () => {
   });
 });
 
-
 describe('mdel', () => {
   it('should return a promise', async () => {
     expect(redisCache.store.mdel('foo', 'bar')).toBeInstanceOf(Promise);
   });
 
   it('can be used with a callback', (done) => {
-    redisCache.mset('foo', 'bar', 'baz', 'qux')
+    redisCache
+      .mset('foo', 'bar', 'baz', 'qux')
       .then((res) => {
-        expect(res).toEqual(["OK", "OK"]);
+        expect(res).toEqual(['OK', 'OK']);
         redisCache.store.mdel('foo', 'baz', function (err, res) {
           expect(err).toBeNull();
           expect(res).toEqual(2);
-          redisCache.mget('foo', 'baz')
+          redisCache
+            .mget('foo', 'baz')
             .then((res) => {
               expect(res).toEqual([null, null]);
               done();
             })
-            .catch(err => done(err))
+            .catch((err) => done(err));
         });
       })
-      .catch(err => done(err));
+      .catch((err) => done(err));
   });
 
   it('should delete a unlimited number of keys', async () => {
@@ -366,21 +377,23 @@ describe('reset', () => {
   });
 
   it('can be used with a callback', (done) => {
-    redisCache.mset('foo', 'bar', 'baz', 'qux')
+    redisCache
+      .mset('foo', 'bar', 'baz', 'qux')
       .then((res) => {
-        expect(res).toEqual(["OK", "OK"]);
+        expect(res).toEqual(['OK', 'OK']);
         redisCache.reset(function (err, res) {
           expect(err).toBeNull();
-          expect(res).toEqual("OK");
-          redisCache.mget('foo', 'baz')
+          expect(res).toEqual('OK');
+          redisCache
+            .mget('foo', 'baz')
             .then((res) => {
               expect(res).toEqual([null, null]);
               done();
             })
-            .catch(err => done(err))
+            .catch((err) => done(err));
         });
       })
-      .catch(err => done(err));
+      .catch((err) => done(err));
   });
 
   it('should flush underlying db', async () => {
@@ -402,16 +415,17 @@ describe('keys', () => {
   });
 
   it('can be used with a callback', (done) => {
-    redisCache.mset('foo', 'bar', 'baz', 'qux')
+    redisCache
+      .mset('foo', 'bar', 'baz', 'qux')
       .then((res) => {
-        expect(res).toEqual(["OK", "OK"]);
+        expect(res).toEqual(['OK', 'OK']);
         redisCache.keys('*', function (err, res) {
           expect(err).toBeNull();
           expect(res).toEqual(expect.arrayContaining(['foo', 'baz']));
           done();
         });
       })
-      .catch(err => done(err));
+      .catch((err) => done(err));
   });
 
   it('should return an array of keys for the given pattern', async () => {
@@ -437,16 +451,17 @@ describe('ttl', () => {
   });
 
   it('can be used with a callback', (done) => {
-    redisCache.set('foo', 'bar')
+    redisCache
+      .set('foo', 'bar')
       .then((res) => {
-        expect(res).toEqual("OK");
+        expect(res).toEqual('OK');
         redisCache.ttl('foo', function (err, res) {
           expect(err).toBeNull();
           expect(res).toEqual(config.ttl);
           done();
         });
       })
-      .catch(err => done(err));
+      .catch((err) => done(err));
   });
 
   it('should retrieve ttl for a given key', async () => {
@@ -501,9 +516,9 @@ describe('overridable isCacheableValue function', () => {
         ...config,
         isCacheableValue: () => {
           return 'I was overridden';
-        }
+        },
       }),
-      password: config.password
+      password: config.password,
     });
   });
 
@@ -516,7 +531,7 @@ describe('wrap function', () => {
   // Simulate retrieving a user from a database
   function getUser(id, cb) {
     setTimeout(() => {
-      cb(null, {id: id});
+      cb(null, { id: id });
     }, 100);
   }
 
@@ -524,7 +539,7 @@ describe('wrap function', () => {
   function getUserPromise(id) {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({id: id});
+        resolve({ id: id });
       }, 100);
     });
   }
@@ -533,19 +548,27 @@ describe('wrap function', () => {
     const userId = 123;
 
     // First call to wrap should run the code
-    redisCache.wrap('wrap-user', (cb) => {
-      getUser(userId, cb);
-    }, (err, user) => {
-      expect(user.id).toEqual(userId);
-
-      // Second call to wrap should retrieve from cache
-      redisCache.wrap('wrap-user', (cb) => {
-        getUser(userId + 1, cb);
-      }, (err, user) => {
+    redisCache.wrap(
+      'wrap-user',
+      (cb) => {
+        getUser(userId, cb);
+      },
+      (err, user) => {
         expect(user.id).toEqual(userId);
-        done();
-      });
-    });
+
+        // Second call to wrap should retrieve from cache
+        redisCache.wrap(
+          'wrap-user',
+          (cb) => {
+            getUser(userId + 1, cb);
+          },
+          (err, user) => {
+            expect(user.id).toEqual(userId);
+            done();
+          },
+        );
+      },
+    );
   });
 
   it('should work with promises', async () => {
@@ -553,18 +576,13 @@ describe('wrap function', () => {
 
     // First call to wrap should run the code
     return redisCache
-      .wrap(
-        'wrap-promise',
-        () => getUserPromise(userId),
-      )
+      .wrap('wrap-promise', () => getUserPromise(userId))
       .then((user) => {
         expect(user.id).toEqual(userId);
 
         // Second call to wrap should retrieve from cache
-        return redisCache.wrap(
-          'wrap-promise',
-          () => getUserPromise(userId + 1),
-        )
+        return redisCache
+          .wrap('wrap-promise', () => getUserPromise(userId + 1))
           .then((user) => expect(user.id).toEqual(userId));
       });
   });
